@@ -330,8 +330,8 @@
   /* Blok Tanda Tangan per pejabat pada Lembar Cetak (gaya disamakan dengan Laporan Kinerja Staff) */
   .rep-sign-wrap{display:flex; justify-content:space-around; gap:24px; margin-top:22px; padding-top:4px; page-break-inside:avoid; flex-wrap:wrap;}
   .rep-sign-col{flex:1 1 220px; max-width:260px; text-align:center; font-size:12px; line-height:1.5;}
-  .rep-sign-space{height:55px; margin:6px 0; display:flex; align-items:center; justify-content:center;}
-  .rep-sign-space img{max-height:55px; max-width:190px;}
+  .rep-sign-space{height:82px; margin:6px 0; display:flex; align-items:center; justify-content:center;}
+  .rep-sign-space img{max-height:82px; max-width:230px;}
   .rep-sign-name{font-weight:700; text-decoration:underline;}
 
   footer.note{text-align:center; font-size:12px; color:var(--ink-soft); margin-top:26px;}
@@ -443,7 +443,7 @@ const AKTIVITAS_BY_OWNER = {"1": [], "7": [{"no": 1, "text": "Bimtek SAKIP", "sa
    ============================================================ */
 
 const PROGRAM_RUTIN_OWNERS = [2,7,8,9];
-const PROGRAM_RUTIN = {"2": {"ownerNo": 2, "label": "Sekretariat (Sekretaris Dinas Sosial)", "indikators": [{"title": "Persentase kegiatan tepat waktu", "recapType": "sumTarget", "satuan": "Kegiatan", "rows": [{"text": "Sekretariat", "target": 4, "months": [0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Bidang Pemberdayaan Sosial", "target": 2, "months": [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Bidang Rehabilitasi Sosial", "target": 1, "months": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Bidang Penanganan Bencana", "target": 5, "months": [0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Bidang Perlindungan dan Jaminan Sosial", "target": 5, "months": [0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}, {"title": "Persentase laporan/telaahan staf tepat waktu", "recapType": "ratioAB", "satuan": "-", "rows": [{"text": "Total Surat Tugas", "target": null, "months": [0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Disposisi Pimpinan", "target": null, "months": [0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}, {"title": "Nilai kepatuhan pengelolaan administrasi internal", "recapType": "sumTarget", "satuan": "Dokumen/Bulan", "rows": [{"text": "Telaah Staff Bulanan", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Laporan Renja triwulan", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Notulen Rapat Lengkap", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Agenda Rutin Terinput di aplikasi", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Surat Keluar sesuai format", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Pengarsipan Online Lengkap", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Surat masuk tercatat lengkap", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Penggunaan sistem e-office", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Disposisi sesuai SOP", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Tindak Lanjut Hasil Rapat", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}, {"title": "Persentase aduan/keluhan antar bidang yang ditindak lanjuti", "recapType": "ratioAB", "satuan": "-", "rows": [{"text": "Jumlah aduan yang ditindak lanjuti", "target": null, "months": [0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah aduan yang masuk", "target": null, "months": [0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}, {"title": "Persepsi internal antar bidang/unit terhadap layanan sekretariat", "recapType": "direct", "satuan": "Nilai", "rows": [{"text": "Persepsi internal antar bidang/unit terhadap layanan sekretariat", "target": 100, "months": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}]}, "8": {"ownerNo": 8, "label": "Sub Bagian Umum dan Kepegawaian", "items": [{"text": "Jumlah Paket Pakaian Dinas Beserta Atribut Kelengkapan", "satuan": "Paket", "target": 50, "months": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Pegawai Berdasarkan Tugas dan Fungsi yang Mengikuti Pendidikan dan Pelatihan", "satuan": "Orang", "target": 61, "months": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Paket Komponen Instalasi Listrik/Penerangan Bangunan Kantor yang Disediakan", "satuan": "Paket", "target": 30, "months": [0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Paket Peralatan dan Perlengkapan Kantor yang Disediakan", "satuan": "Paket", "target": 30, "months": [0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Paket Peralatan Rumah Tangga yang Disediakan", "satuan": "Paket", "target": 30, "months": [0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Paket Bahan Logistik Kantor yang Disediakan", "satuan": "Paket", "target": 30, "months": [0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Paket Barang Cetakan dan Penggandaan yang Disediakan", "satuan": "Paket", "target": 30, "months": [0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Dokumen Bahan Bacaan dan Peraturan Perundang-Undangan yang Disediakan", "satuan": "Dokumen", "target": 6, "months": [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Laporan Penyelenggaraan Rapat Koordinasi dan Konsultasi SKPD", "satuan": "Laporan", "target": 40, "months": [2, 2, 3, 5, 4, 3, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Unit Kendaraan Perorangan Dinas atau Kendaraan Dinas Jabatan yang Disediakan", "satuan": "Unit", "target": 2, "months": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Unit Kendaraan Dinas Operasional atau Lapangan yang Disediakan", "satuan": "Unit", "target": null, "months": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Laporan Penyediaan Jasa Komunikasi, Sumber Daya Air dan Listrik yang Disediakan", "satuan": "Laporan", "target": 3, "months": [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Laporan Penyediaan Jasa Pelayanan Umum Kantor yang Disediakan", "satuan": "Laporan", "target": 6, "months": [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Kendaraan Perorangan Dinas atau Kendaraan Dinas Jabatan yang Dipelihara dan Dibayarkan Pajaknya", "satuan": "Unit", "target": 12, "months": [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Sarana dan Prasarana Pendukung Gedung Kantor atau Bangunan Lainnya yang Dipelihara/Direhabilitasi", "satuan": "Unit", "target": 6, "months": [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]}]}, "9": {"ownerNo": 9, "label": "Sub Bagian Keuangan dan Aset", "items": [{"text": "Jumlah Orang yang Menerima Gaji dan Tunjangan ASN", "satuan": "Orang", "target": 2400, "months": [200, 200, 200, 200, 200, 200, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Laporan Keuangan Bulanan/Triwulanan/Semesteran SKPD dan Laporan Koordinasi Penyusunan Laporan Keuangan Bulanan/Triwulanan/Semesteran SKPD", "satuan": "Laporan", "target": 12, "months": [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Dokumen Hasil Penyediaan Administrasi Pelaksanaan Tugas ASN", "satuan": "Dokumen", "target": 12, "months": [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]}]}, "7": {"ownerNo": 7, "label": "Sub Bagian Perencanaan dan Pelaporan", "items": [{"text": "Jumlah Dokumen Perencanaan Perangkat Daerah", "satuan": "Dokumen", "target": 5, "months": [1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0]}, {"text": "Jumlah Laporan Evaluasi Kinerja Perangkat Daerah", "satuan": "Laporan", "target": 7, "months": [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Berita Acara Hasil Forum Perangkat Daerah Berdasarkan Bidang Urusan yang Diampu dalam Rangka Penyusunan Dokumen Perencanaan Perangkat Daerah", "satuan": "Dokumen", "target": 2, "months": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Dokumen Hasil Penyelenggaraan Walidata Pendukung Statistik Sektoral Daerah", "satuan": "Dokumen", "target": 1, "months": [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]}]}};
+const PROGRAM_RUTIN = {"2": {"ownerNo": 2, "label": "Sekretariat (Sekretaris Dinas Sosial)", "indikators": [{"title": "Persentase kegiatan tepat waktu", "recapType": "sumTarget", "satuan": "Kegiatan", "rows": [{"text": "Sekretariat", "target": 4, "months": [0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Bidang Pemberdayaan Sosial", "target": 2, "months": [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Bidang Rehabilitasi Sosial", "target": 1, "months": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Bidang Penanganan Bencana", "target": 5, "months": [0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Bidang Perlindungan dan Jaminan Sosial", "target": 5, "months": [0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}, {"title": "Persentase laporan/telaahan staf tepat waktu", "recapType": "ratioAB", "satuan": "-", "rows": [{"text": "Total Surat Tugas", "target": null, "months": [0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Disposisi Pimpinan", "target": null, "months": [0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}, {"title": "Nilai kepatuhan pengelolaan administrasi internal", "recapType": "sumTarget", "satuan": "Dokumen/Bulan", "rows": [{"text": "Telaah Staff Bulanan", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Laporan Renja triwulan", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Notulen Rapat Lengkap", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Agenda Rutin Terinput di aplikasi", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Surat Keluar sesuai format", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Pengarsipan Online Lengkap", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Surat masuk tercatat lengkap", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Penggunaan sistem e-office", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Disposisi sesuai SOP", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Tindak Lanjut Hasil Rapat", "target": 3, "months": [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}, {"title": "Persentase aduan/keluhan antar bidang yang ditindak lanjuti", "recapType": "ratioAB", "satuan": "-", "rows": [{"text": "Jumlah aduan yang ditindak lanjuti", "target": null, "months": [0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah aduan yang masuk", "target": null, "months": [0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}, {"title": "Persepsi internal antar bidang/unit terhadap layanan sekretariat", "recapType": "direct", "satuan": "Nilai", "rows": [{"text": "Persepsi internal antar bidang/unit terhadap layanan sekretariat", "target": 100, "months": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}]}, "8": {"ownerNo": 8, "label": "Sub Bagian Umum dan Kepegawaian", "itemGroups": [{"title": "Pakaian Dinas dan Pengembangan Kompetensi Pegawai", "items": [{"text": "Jumlah Paket Pakaian Dinas Beserta Atribut Kelengkapan", "satuan": "Paket", "target": 50, "months": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Pegawai Berdasarkan Tugas dan Fungsi yang Mengikuti Pendidikan dan Pelatihan", "satuan": "Orang", "target": 61, "months": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}, {"title": "Penyediaan Peralatan, Perlengkapan dan Logistik Kantor", "items": [{"text": "Jumlah Paket Komponen Instalasi Listrik/Penerangan Bangunan Kantor yang Disediakan", "satuan": "Paket", "target": 30, "months": [0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Paket Peralatan dan Perlengkapan Kantor yang Disediakan", "satuan": "Paket", "target": 30, "months": [0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Paket Peralatan Rumah Tangga yang Disediakan", "satuan": "Paket", "target": 30, "months": [0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Paket Bahan Logistik Kantor yang Disediakan", "satuan": "Paket", "target": 30, "months": [0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Paket Barang Cetakan dan Penggandaan yang Disediakan", "satuan": "Paket", "target": 30, "months": [0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0]}]}, {"title": "Bahan Bacaan dan Rapat Koordinasi", "items": [{"text": "Jumlah Dokumen Bahan Bacaan dan Peraturan Perundang-Undangan yang Disediakan", "satuan": "Dokumen", "target": 6, "months": [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Laporan Penyelenggaraan Rapat Koordinasi dan Konsultasi SKPD", "satuan": "Laporan", "target": 40, "months": [2, 2, 3, 5, 4, 3, 0, 0, 0, 0, 0, 0]}]}, {"title": "Penyediaan Jasa Perkantoran", "items": [{"text": "Jumlah Laporan Penyediaan Jasa Komunikasi, Sumber Daya Air dan Listrik yang Disediakan", "satuan": "Laporan", "target": 3, "months": [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Laporan Penyediaan Jasa Pelayanan Umum Kantor yang Disediakan", "satuan": "Laporan", "target": 6, "months": [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]}]}, {"title": "Pemeliharaan Kendaraan dan Sarana Prasarana Gedung", "items": [{"text": "Jumlah Kendaraan Perorangan Dinas atau Kendaraan Dinas Jabatan yang Dipelihara dan Dibayarkan Pajaknya", "satuan": "Unit", "target": 12, "months": [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Sarana dan Prasarana Pendukung Gedung Kantor atau Bangunan Lainnya yang Dipelihara/Direhabilitasi", "satuan": "Unit", "target": 6, "months": [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]}]}]}, "9": {"ownerNo": 9, "label": "Sub Bagian Keuangan dan Aset", "items": [{"text": "Jumlah Orang yang Menerima Gaji dan Tunjangan ASN", "satuan": "Orang", "target": 2400, "months": [200, 200, 200, 200, 200, 200, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Laporan Keuangan Bulanan/Triwulanan/Semesteran SKPD dan Laporan Koordinasi Penyusunan Laporan Keuangan Bulanan/Triwulanan/Semesteran SKPD", "satuan": "Laporan", "target": 12, "months": [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Dokumen Hasil Penyediaan Administrasi Pelaksanaan Tugas ASN", "satuan": "Dokumen", "target": 12, "months": [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]}], "itemGroups": [{"title": "Penyediaan Kendaraan Dinas", "items": [{"text": "Jumlah Unit Kendaraan Perorangan Dinas atau Kendaraan Dinas Jabatan yang Disediakan", "satuan": "Unit", "target": 2, "months": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Unit Kendaraan Dinas Operasional atau Lapangan yang Disediakan", "satuan": "Unit", "target": null, "months": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}]}]}, "7": {"ownerNo": 7, "label": "Sub Bagian Perencanaan dan Pelaporan", "items": [{"text": "Jumlah Dokumen Perencanaan Perangkat Daerah", "satuan": "Dokumen", "target": 5, "months": [1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0]}, {"text": "Jumlah Laporan Evaluasi Kinerja Perangkat Daerah", "satuan": "Laporan", "target": 7, "months": [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Berita Acara Hasil Forum Perangkat Daerah Berdasarkan Bidang Urusan yang Diampu dalam Rangka Penyusunan Dokumen Perencanaan Perangkat Daerah", "satuan": "Dokumen", "target": 2, "months": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"text": "Jumlah Dokumen Hasil Penyelenggaraan Walidata Pendukung Statistik Sektoral Daerah", "satuan": "Dokumen", "target": 1, "months": [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]}]}};
 const PERIODE = { tahun: 2026 };
 // BULAN_AKTIF_IDX = indeks bulan berjalan saat ini (0=Jan ... 11=Des), dipakai untuk
 // sorotan "bulan berjalan" pada tabel serta nilai default tampilan Lembar Cetak/Input.
@@ -1366,19 +1366,39 @@ async function loadProgramRutin(){
         if(grp.indikators && saved.indikators){
           saved.indikators.forEach((si,ii)=>{
             if(grp.indikators[ii] && si.rows) si.rows.forEach((sr,ri)=>{
-              if(grp.indikators[ii].rows[ri]){
-                grp.indikators[ii].rows[ri].months = sr.months;
-                if(sr.target!==undefined) grp.indikators[ii].rows[ri].target = sr.target;
+              const target = sr.text ? grp.indikators[ii].rows.find(r=>r.text===sr.text) : grp.indikators[ii].rows[ri];
+              if(target){
+                target.months = sr.months;
+                if(sr.target!==undefined) target.target = sr.target;
               }
             });
           });
         }
         if(grp.items && saved.items){
           saved.items.forEach((si,ii)=>{
-            if(grp.items[ii]){
-              grp.items[ii].months = si.months;
-              if(si.target!==undefined) grp.items[ii].target = si.target;
+            const target = si.text ? grp.items.find(it=>it.text===si.text) : grp.items[ii];
+            if(target){
+              target.months = si.months;
+              if(si.target!==undefined) target.target = si.target;
             }
+          });
+        }
+        if(grp.itemGroups && saved.itemGroups){
+          saved.itemGroups.forEach((sg,gi)=>{
+            if(!sg.items) return;
+            sg.items.forEach((si,ii)=>{
+              let target = null;
+              if(si.text){
+                // Cari berdasarkan teks di seluruh kelompok, supaya tetap cocok walau urutan/kelompok berubah.
+                grp.itemGroups.forEach(g=>{ const found = g.items.find(it=>it.text===si.text); if(found) target = found; });
+              } else if(grp.itemGroups[gi]){
+                target = grp.itemGroups[gi].items[ii];
+              }
+              if(target){
+                target.months = si.months;
+                if(si.target!==undefined) target.target = si.target;
+              }
+            });
           });
         }
       }
@@ -1454,8 +1474,9 @@ function findIndicatorRow(ownerNo, indKeyword){
 async function saveProgramRutin(ownerNo){
   const grp = STATE.programRutin[String(ownerNo)];
   const payload = { updatedBy: STATE.user.nama, updatedAt: new Date().toISOString() };
-  if(grp.indikators) payload.indikators = grp.indikators.map(ind=>({ rows: ind.rows.map(r=>({months:r.months, target:r.target})) }));
-  if(grp.items) payload.items = grp.items.map(it=>({months:it.months, target:it.target}));
+  if(grp.indikators) payload.indikators = grp.indikators.map(ind=>({ rows: ind.rows.map(r=>({text:r.text, months:r.months, target:r.target})) }));
+  if(grp.items) payload.items = grp.items.map(it=>({text:it.text, months:it.months, target:it.target}));
+  if(grp.itemGroups) payload.itemGroups = grp.itemGroups.map(g=>({ title:g.title, items: g.items.map(it=>({text:it.text, months:it.months, target:it.target})) }));
   await window.storage.set(STORAGE_KEY_PROGRUT+ownerNo, JSON.stringify(payload), true);
 }
 function prIndCalc(ind){
@@ -2523,6 +2544,15 @@ function prGroupGrandCap(ownerNo){
       if(cap!==null){ sumCap+=cap; count++; }
     });
   }
+  if(grp.itemGroups){
+    grp.itemGroups.forEach(g=>{
+      g.items.forEach(it=>{
+        const total = sumMonths(it.months);
+        const cap = it.target ? total/it.target : null;
+        if(cap!==null){ sumCap+=cap; count++; }
+      });
+    });
+  }
   return count ? sumCap/count : null;
 }
 function prGroupGrandCapHtml(ownerNo){
@@ -2557,6 +2587,7 @@ function prGroupPanelHtml(ownerNo, isAdmin){
     ${prGroupGrandCapHtml(ownerNo)}
     ${grp.indikators ? grp.indikators.map((ind,ii)=>prIndikatorHtml(ownerNo, ind, ii, canEdit, isAdmin)).join('') : ''}
     ${grp.items ? prItemsTableHtml(ownerNo, grp.items, canEdit, isAdmin) : ''}
+    ${grp.itemGroups ? grp.itemGroups.map((g,gi)=>prItemGroupHtml(ownerNo, g, gi, canEdit, isAdmin)).join('') : ''}
     ${canEdit ? `
     <div class="panel-actions" style="margin-top:16px;">
       <span class="saved-flag" id="prSavedFlag-${ownerNo}">Tersimpan.</span>
@@ -2644,6 +2675,81 @@ function prItemsTableHtml(ownerNo, items, canEdit, isAdmin){
   </div>`;
 }
 
+// Menghitung Total & Capaian gabungan (target-tertimbang) untuk satu kelompok/perbagian
+// item dalam Program Rutin, supaya persentase capaian per kelompok bisa ditampilkan
+// terpisah dari capaian masing-masing uraian.
+function prItemGroupCalc(items){
+  let totalR=0, totalT=0;
+  items.forEach(it=>{ totalR += sumMonths(it.months); totalT += (Number(it.target)||0); });
+  return { total: totalR, cap: totalT ? totalR/totalT : null };
+}
+function prItemGroupHtml(ownerNo, group, gi, canEdit, isAdmin){
+  const {total, cap} = prItemGroupCalc(group.items);
+  return `
+  <div class="rep-sec-title" style="margin-top:18px;">Kelompok ${gi+1}. ${group.title}</div>
+  <div class="table-scroll">
+    <table class="aktivitas" id="prGroupItems-${ownerNo}-${gi}">
+      <thead>
+        <tr>
+          <th style="min-width:24px;">No</th>
+          <th style="min-width:240px;">Uraian</th>
+          <th>Satuan</th>
+          <th>Target</th>
+          ${NAMA_BULAN.map((b,mi)=>`<th class="${isTW2(mi)?'tw2':''}">${b}</th>`).join('')}
+          <th>Total</th>
+          <th>Capaian %</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${group.items.map((it,ii)=>{
+          const t = sumMonths(it.months);
+          const c = it.target ? t/it.target : null;
+          return `<tr>
+            <td class="num">${ii+1}</td>
+            <td class="act">${it.text}</td>
+            <td class="num readonly">${it.satuan||'-'}</td>
+            <td class="num ${isAdmin?'':'readonly'}">${isAdmin
+              ? `<input class="pr-groupitem-target-input" type="text" inputmode="decimal" data-owner="${ownerNo}" data-gi="${gi}" data-ii="${ii}" value="${it.target!=null?it.target:''}" style="width:64px;">`
+              : (it.target!=null?fmtNum(it.target, it.target<3?2:0):'-')}</td>
+            ${it.months.map((m,mi)=>`
+              <td class="month ${isTW2(mi)?'tw2':''}">
+                ${canEdit
+                  ? `<input class="pr-groupitem-input" type="text" inputmode="decimal" data-owner="${ownerNo}" data-gi="${gi}" data-ii="${ii}" data-mi="${mi}" value="${m||''}">`
+                  : `<span>${fmtNum(m,m<3?2:0)}</span>`}
+              </td>`).join('')}
+            <td class="num total" data-prgitemtotal="${ownerNo}:${gi}:${ii}">${fmtNum(t, t<3?2:0)}</td>
+            <td class="num pct ${pctClass(c)}" data-prgitempct="${ownerNo}:${gi}:${ii}">${c===null?'-':fmtNum(c*100,1)+'%'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="ind-card-foot" style="padding:8px 2px;">
+    <span>Total Realisasi Kelompok: <b data-prgrouptotal="${ownerNo}:${gi}">${fmtNum(total, total<3?2:0)}</b></span>
+    <span>Capaian Kelompok: <b class="pct ${pctClass(cap)}" data-prgrouppct="${ownerNo}:${gi}">${cap===null?'-':fmtNum(cap*100,1)+'%'}</b></span>
+  </div>`;
+}
+function refreshPrItemGroupCalc(ownerNo, gi){
+  const grp = STATE.programRutin[String(ownerNo)];
+  const group = grp.itemGroups[gi];
+  group.items.forEach((it,ii)=>{
+    const t = sumMonths(it.months);
+    const c = it.target ? t/it.target : null;
+    document.querySelectorAll(`[data-prgitemtotal="${ownerNo}:${gi}:${ii}"]`).forEach(el=>{ el.textContent = fmtNum(t, t<3?2:0); });
+    document.querySelectorAll(`[data-prgitempct="${ownerNo}:${gi}:${ii}"]`).forEach(el=>{
+      el.textContent = c===null ? '-' : fmtNum(c*100,1)+'%';
+      el.className = el.className.replace(/\b(good|mid|low)\b/g,'').trim() + ' ' + pctClass(c);
+    });
+  });
+  const {total, cap} = prItemGroupCalc(group.items);
+  document.querySelectorAll(`[data-prgrouptotal="${ownerNo}:${gi}"]`).forEach(el=>{ el.textContent = fmtNum(total, total<3?2:0); });
+  document.querySelectorAll(`[data-prgrouppct="${ownerNo}:${gi}"]`).forEach(el=>{
+    el.textContent = cap===null ? '-' : fmtNum(cap*100,1)+'%';
+    el.className = el.className.replace(/\b(good|mid|low)\b/g,'').trim() + ' ' + pctClass(cap);
+  });
+  refreshPrGrandCap(ownerNo);
+}
+
 function bindProgramRutinGroup(ownerNo){
   const grp = STATE.programRutin[String(ownerNo)];
   document.querySelectorAll(`input.pr-month-input[data-owner="${ownerNo}"]`).forEach(inp=>{
@@ -2676,6 +2782,22 @@ function bindProgramRutinGroup(ownerNo){
       let v = parseFloat(inp.value.replace(',','.'));
       grp.items[ii].target = isNaN(v) ? null : v;
       refreshPrItemCalc(ownerNo, ii);
+    });
+  });
+  document.querySelectorAll(`input.pr-groupitem-input[data-owner="${ownerNo}"]`).forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const gi = Number(inp.dataset.gi), ii = Number(inp.dataset.ii), mi = Number(inp.dataset.mi);
+      let v = parseFloat(inp.value.replace(',','.'));
+      grp.itemGroups[gi].items[ii].months[mi] = isNaN(v) ? 0 : v;
+      refreshPrItemGroupCalc(ownerNo, gi);
+    });
+  });
+  document.querySelectorAll(`input.pr-groupitem-target-input[data-owner="${ownerNo}"]`).forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const gi = Number(inp.dataset.gi), ii = Number(inp.dataset.ii);
+      let v = parseFloat(inp.value.replace(',','.'));
+      grp.itemGroups[gi].items[ii].target = isNaN(v) ? null : v;
+      refreshPrItemGroupCalc(ownerNo, gi);
     });
   });
   const saveBtn = document.getElementById('prSaveBtn-'+ownerNo);
