@@ -1633,6 +1633,10 @@ function renderLogin(){
 async function enterApp(){
   const app = document.getElementById('app');
   app.innerHTML = `<div class="loading" style="padding:80px;text-align:center;color:#4a5568;">Memuat data kinerja…</div>`;
+  // Tarik ulang data bersama (termasuk tanda tangan) langsung dari server pusat setiap kali
+  // ada yang login, supaya perangkat ini tidak memakai cache lama — apa pun yang sudah diisi
+  // dari komputer/HP lain langsung terlihat, bukan hanya terlihat di perangkat tempat mengisi.
+  try{ await window.storage.refreshShared(); }catch(e){ /* kalau gagal, lanjut pakai cache/cadangan terakhir */ }
   STATE.sections = await loadAllSections();
   STATE.signatures = await loadSignatures();
   STATE.approval = await loadApproval();
@@ -3577,10 +3581,13 @@ function openSignPad(targetNo, label){
       if(typeof padTargetNo==='string' && padTargetNo.indexOf('APPROVAL:')===0){
         const approverNo = Number(padTargetNo.split(':')[1]);
         if(!STATE.approval[approverNo]) STATE.approval[approverNo] = {};
-        const prev = STATE.approval[approverNo][bulanIdx];
-        STATE.approval[approverNo][bulanIdx] = { dataURL, ts: new Date().toISOString(), by: STATE.user.nama };
+        // Tanda tangan "Mengetahui" juga berlaku untuk SEMUA bulan (Jan–Des) sekali TTD,
+        // sama seperti tanda tangan pejabat penanggung jawab — tidak perlu diulang tiap bulan.
+        const prevAll = clone(STATE.approval[approverNo]);
+        const apprEntry = { dataURL, ts: new Date().toISOString(), by: STATE.user.nama };
+        for(let mi=0; mi<12; mi++){ STATE.approval[approverNo][mi] = apprEntry; }
         try{ await saveApproval(); }catch(e){
-          if(prev) STATE.approval[approverNo][bulanIdx] = prev; else delete STATE.approval[approverNo][bulanIdx];
+          STATE.approval[approverNo] = prevAll;
           throw e;
         }
       } else {
