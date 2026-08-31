@@ -706,8 +706,19 @@ function bulanIdxLabel(bulanIdx){ return bulanIdx==='gab' ? 'Gabungan' : NAMA_BU
 function bulanIdxLabelFull(bulanIdx){ return bulanIdx==='gab' ? 'Gabungan (Januari–Desember)' : NAMA_BULAN_FULL[bulanIdx]; }
 
 const STORAGE_KEY_SECTIONS = 'kinerja:section:'; // + idx
-const STORAGE_KEY_SIGN = 'kinerja:signatures';
-const STORAGE_KEY_APPROVAL = 'kinerja:approval';
+// PENTING (perbaikan bug "TTD tidak sinkron ke server pusat"): dulu SEMUA tanda tangan
+// (21 pejabat) disimpan dalam SATU kunci raksasa (STORAGE_KEY_SIGN/APPROVAL lama), dan
+// gambar TTD yang sama digandakan 12x (satu per bulan). Google Sheets membatasi setiap
+// SEL maksimal 50.000 karakter dan MEMOTONG diam-diam (tanpa error) kalau melebihi —
+// sehingga data rusak di server pusat walau di layar Admin "tampak berhasil tersimpan".
+// Sekarang tiap pejabat punya KUNCI TERPISAH, dan TTD tidak lagi digandakan per bulan
+// (karena memang berlaku untuk semua bulan), sehingga tiap sel jauh lebih kecil.
+const STORAGE_KEY_SIGN_PREFIX = 'kinerja:signature:'; // + no pejabat
+const STORAGE_KEY_APPROVAL_PREFIX = 'kinerja:approval:'; // + no approver
+// Kunci lama (format gabungan) tetap dijaga di sini HANYA untuk migrasi data lama
+// yang mungkin sudah kepalang tersimpan sebelum perbaikan ini dipasang.
+const STORAGE_KEY_SIGN_LEGACY = 'kinerja:signatures';
+const STORAGE_KEY_APPROVAL_LEGACY = 'kinerja:approval';
 const STORAGE_KEY_PROGRUT = 'kinerja:programrutin:'; // + ownerNo
 const STORAGE_KEY_PEJABAT = 'kinerja:pejabat'; // daftar pejabat (bisa diedit Admin: nama/jabatan/NIP/kode akses)
 const STORAGE_KEY_PPKS = 'kinerja:ppksCalc2026'; // data mentah kalkulator Tabel Perhitungan PPKS (khusus Admin)
@@ -1336,93 +1347,98 @@ async function saveSection(idx){
     throw new Error('Gagal menyimpan data ke penyimpanan. Detail: '+(e && e.message ? e.message : e));
   }
 }
-async function loadSignatures(){
+// Muat tanda tangan semua pejabat dari kunci-kunci TERPISAH (satu per pejabat),
+// lalu susun ulang ke bentuk {no: {0:entry,...,11:entry}} di MEMORI saja supaya
+// kode tampilan (renderReport dkk, yang mengakses per-bulan) tidak perlu diubah.
+// Duplikasi 12-bulan TIDAK LAGI ditulis ke server — hanya dibentuk di memori.
+async function loadSignaturesFromKeys(prefix, legacyKey){
+  const result = {};
+  // 1) Kunci baru per-pejabat (format setelah perbaikan bug).
+  for(const p of PEJABAT){
+    try{
+      const r = await window.storage.get(prefix + p.no, true);
+      if(r && r.value){
+        const entry = JSON.parse(r.value);
+        const monthsObj = {};
+        for(let mi=0; mi<12; mi++){ monthsObj[mi] = entry; }
+        result[p.no] = monthsObj;
+      }
+    }catch(e){ /* belum ada TTD utk pejabat ini, lewati */ }
+  }
+  // 2) Migrasi dari kunci lama (satu blob raksasa berisi semua pejabat) kalau masih ada
+  //    dan pejabat tsb belum punya kunci baru — supaya TTD lama yg sempat tersimpan
+  //    utuh (di bawah batas 50.000 karakter) tidak hilang begitu perbaikan ini dipasang.
   try{
-    const res = await window.storage.get(STORAGE_KEY_SIGN, true);
-    return res && res.value ? JSON.parse(res.value) : {};
-  }catch(e){ return {}; }
+    const legacyRes = await window.storage.get(legacyKey, true);
+    if(legacyRes && legacyRes.value){
+      const legacy = JSON.parse(legacyRes.value);
+      for(const noStr of Object.keys(legacy||{})){
+        const no = Number(noStr);
+        if(result[no]) continue; // sudah ada versi baru, tidak perlu migrasi
+        const monthsObj = legacy[noStr] || {};
+        const entries = Object.keys(monthsObj).map(mi=>monthsObj[mi]).filter(Boolean);
+        if(!entries.length) continue;
+        let best = entries[0];
+        for(const e of entries){ if(e && e.ts && (!best.ts || e.ts > best.ts)) best = e; }
+        const filled = {};
+        for(let mi=0; mi<12; mi++){ filled[mi] = best; }
+        result[no] = filled;
+        // tulis ke kunci baru (kecil, per-pejabat) supaya migrasi permanen
+        try{ await window.storage.set(prefix + no, JSON.stringify(best), true); }catch(e){ /* coba lagi lain kali */ }
+      }
+    }
+  }catch(e){ /* tidak ada data lama / gagal dimuat, abaikan */ }
+  return result;
 }
-async function saveSignatures(){
-  await window.storage.set(STORAGE_KEY_SIGN, JSON.stringify(STATE.signatures), true);
-}
-// Menyimpan tanda tangan pejabat (untuk 12 bulan sekaligus) dengan cara AMAN dari
-// tabrakan data (race condition): sebelum menyimpan, tarik dulu versi TERBARU dari
-// server pusat, lalu timpa HANYA entri milik pejabat ini di atas versi terbaru itu.
-// Dengan begitu, tanda tangan pejabat lain yang baru saja disimpan dari perangkat lain
-// (dan mungkin belum sempat termuat di perangkat ini) tidak ikut hilang tertimpa.
-async function mergeAndSaveSignature(no, sigEntry){
+async function loadSignatures(){ return loadSignaturesFromKeys(STORAGE_KEY_SIGN_PREFIX, STORAGE_KEY_SIGN_LEGACY); }
+async function loadApproval(){ return loadSignaturesFromKeys(STORAGE_KEY_APPROVAL_PREFIX, STORAGE_KEY_APPROVAL_LEGACY); }
+
+// Setelah menyimpan data BERSAMA ke server pusat, tarik ulang langsung dari server
+// (bukan dari cache di memori) dan bandingkan dengan apa yang baru saja dikirim.
+// Kalau tidak sama persis (mis. terpotong karena melebihi batas ukuran sel Google
+// Sheets, atau backend gagal menyimpan), lempar error yang jelas ke pengguna —
+// supaya kegagalan tidak lagi "diam-diam" dan tampak seolah berhasil padahal tidak.
+async function verifySharedSave(key, expectedValue){
   await window.storage.refreshShared();
-  const fresh = await loadSignatures();
-  if(!fresh[no]) fresh[no] = {};
-  for(let mi=0; mi<12; mi++){ fresh[no][mi] = sigEntry; }
-  await window.storage.set(STORAGE_KEY_SIGN, JSON.stringify(fresh), true);
-  STATE.signatures = fresh;
+  let actual = null;
+  try{
+    const r = await window.storage.get(key, true);
+    actual = r ? r.value : null;
+  }catch(e){ actual = null; }
+  if(actual !== expectedValue){
+    throw new Error('Verifikasi gagal: data yang tersimpan di server pusat tidak sama dengan yang dikirim (kemungkinan terpotong karena terlalu besar, atau backend Google Apps Script gagal menyimpan). Coba lagi, atau periksa langsung sheet "KV" pada baris key="'+key+'".');
+  }
+}
+// Menyimpan tanda tangan SATU pejabat ke kuncinya sendiri (bukan lagi satu blob
+// gabungan semua pejabat), sehingga tidak lagi bergantung pada / berisiko
+// menabrak tanda tangan pejabat lain, dan ukurannya jauh lebih kecil per sel.
+async function mergeAndSaveSignature(no, sigEntry){
+  const payload = JSON.stringify(sigEntry);
+  await window.storage.set(STORAGE_KEY_SIGN_PREFIX + no, payload, true);
+  await verifySharedSave(STORAGE_KEY_SIGN_PREFIX + no, payload);
+  if(!STATE.signatures[no]) STATE.signatures[no] = {};
+  for(let mi=0; mi<12; mi++){ STATE.signatures[no][mi] = sigEntry; }
 }
 async function mergeAndClearSignature(no){
-  await window.storage.refreshShared();
-  const fresh = await loadSignatures();
-  if(fresh[no]){ for(let mi=0; mi<12; mi++){ delete fresh[no][mi]; } }
-  await window.storage.set(STORAGE_KEY_SIGN, JSON.stringify(fresh), true);
-  STATE.signatures = fresh;
-}
-async function loadApproval(){
-  try{
-    const res = await window.storage.get(STORAGE_KEY_APPROVAL, true);
-    const parsed = res && res.value ? JSON.parse(res.value) : {};
-    return parsed && typeof parsed==='object' ? parsed : {};
-  }catch(e){ return {}; }
-}
-async function saveApproval(){
-  await window.storage.set(STORAGE_KEY_APPROVAL, JSON.stringify(STATE.approval), true);
+  try{ await window.storage.delete(STORAGE_KEY_SIGN_PREFIX + no, true); }catch(e){ /* mgkn memang belum ada */ }
+  delete STATE.signatures[no];
 }
 // Sama seperti mergeAndSaveSignature, tapi untuk tanda tangan "Mengetahui" (approval).
 async function mergeAndSaveApproval(approverNo, apprEntry){
-  await window.storage.refreshShared();
-  const fresh = await loadApproval();
-  if(!fresh[approverNo]) fresh[approverNo] = {};
-  for(let mi=0; mi<12; mi++){ fresh[approverNo][mi] = apprEntry; }
-  await window.storage.set(STORAGE_KEY_APPROVAL, JSON.stringify(fresh), true);
-  STATE.approval = fresh;
+  const payload = JSON.stringify(apprEntry);
+  await window.storage.set(STORAGE_KEY_APPROVAL_PREFIX + approverNo, payload, true);
+  await verifySharedSave(STORAGE_KEY_APPROVAL_PREFIX + approverNo, payload);
+  if(!STATE.approval[approverNo]) STATE.approval[approverNo] = {};
+  for(let mi=0; mi<12; mi++){ STATE.approval[approverNo][mi] = apprEntry; }
 }
-// Perbaikan data lama: sebelumnya tanda tangan hanya tersimpan di satu bulan
-// (mis. Juni) untuk sebagian akun. Fungsi ini memeriksa SEMUA akun; jika ada
-// tanda tangan yang tersimpan di bulan manapun tapi belum lengkap di 12 bulan,
-// maka tanda tangan tersebut (yang paling baru) disalin ke seluruh bulan
-// Januari–Desember, lalu disimpan kembali ke server pusat.
+// Dulu fungsi ini "meratakan" TTD yang baru tersimpan sebagian bulan ke 12 bulan
+// lalu menulis ULANG seluruh blob gabungan ke server (ini salah satu sumber
+// duplikasi yang memicu bug pemotongan data). Sekarang cukup memuat ulang dari
+// kunci per-pejabat (loadSignatures/loadApproval sudah membentuk 12 bulan di
+// memori tanpa menulis ulang apa pun ke server), jadi fungsi ini hanya alias muat ulang.
 async function fixSignaturesAcrossAllMonths(){
-  function pickLatestAndFill(dataObj){
-    let changed = false;
-    for(const key of Object.keys(dataObj)){
-      const monthsObj = dataObj[key] || {};
-      const entries = Object.keys(monthsObj).map(mi=>monthsObj[mi]).filter(Boolean);
-      if(entries.length===0) continue;
-      let best = entries[0];
-      for(const e of entries){ if(e && e.ts && (!best.ts || e.ts > best.ts)) best = e; }
-      for(let mi=0; mi<12; mi++){
-        const cur = monthsObj[mi];
-        if(!cur || cur.dataURL !== best.dataURL){
-          monthsObj[mi] = best;
-          changed = true;
-        }
-      }
-      dataObj[key] = monthsObj;
-    }
-    return changed;
-  }
-
-  const sig = await loadSignatures();
-  const sigChanged = pickLatestAndFill(sig);
-  if(sigChanged){
-    await window.storage.set(STORAGE_KEY_SIGN, JSON.stringify(sig), true);
-  }
-  STATE.signatures = sig;
-
-  const appr = await loadApproval();
-  const apprChanged = pickLatestAndFill(appr);
-  if(apprChanged){
-    await window.storage.set(STORAGE_KEY_APPROVAL, JSON.stringify(appr), true);
-  }
-  STATE.approval = appr;
+  STATE.signatures = await loadSignatures();
+  STATE.approval = await loadApproval();
 }
 async function loadProgramRutin(){
   const pr = clone(PROGRAM_RUTIN);
@@ -3634,7 +3650,21 @@ function openSignPad(targetNo, label){
       dataURL = uploadedDataURL;
     } else {
       if(!padHasInk){ bg.classList.remove('active'); return; }
-      dataURL = canvas.toDataURL('image/png');
+      // PENTING: hasil gambar tangan di kanvas TIDAK dibatasi ukurannya seperti unggahan
+      // foto (yang selalu di-resize ke maks. MAX_SIGN_DIM via resizeImageToDataURL).
+      // Di layar dengan devicePixelRatio tinggi (HP/laptop retina), canvas.toDataURL('image/png')
+      // polos bisa menghasilkan base64 sangat panjang dan berisiko melebihi batas ~50.000
+      // karakter per sel Google Sheets saat disimpan lewat kvSet — sehingga tersimpan
+      // terpotong/rusak di server pusat meski TIDAK ada error yang tampil ke pengguna.
+      // Di sini kita samakan perlakuannya dengan jalur unggah foto: resize ke maks.
+      // MAX_SIGN_DIM px dan kompres sebagai JPEG kualitas 0.9 (latar putih otomatis).
+      const rawPng = canvas.toDataURL('image/png');
+      dataURL = await new Promise((resolve, reject)=>{
+        const img = new Image();
+        img.onload = ()=>{ try{ resolve(resizeImageToDataURL(img, MAX_SIGN_DIM)); }catch(e){ reject(e); } };
+        img.onerror = reject;
+        img.src = rawPng;
+      });
     }
     const saveBtn = document.getElementById('btnSavePad');
     const label = saveBtn.textContent;
