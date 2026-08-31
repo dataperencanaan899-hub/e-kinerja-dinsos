@@ -1345,6 +1345,26 @@ async function loadSignatures(){
 async function saveSignatures(){
   await window.storage.set(STORAGE_KEY_SIGN, JSON.stringify(STATE.signatures), true);
 }
+// Menyimpan tanda tangan pejabat (untuk 12 bulan sekaligus) dengan cara AMAN dari
+// tabrakan data (race condition): sebelum menyimpan, tarik dulu versi TERBARU dari
+// server pusat, lalu timpa HANYA entri milik pejabat ini di atas versi terbaru itu.
+// Dengan begitu, tanda tangan pejabat lain yang baru saja disimpan dari perangkat lain
+// (dan mungkin belum sempat termuat di perangkat ini) tidak ikut hilang tertimpa.
+async function mergeAndSaveSignature(no, sigEntry){
+  await window.storage.refreshShared();
+  const fresh = await loadSignatures();
+  if(!fresh[no]) fresh[no] = {};
+  for(let mi=0; mi<12; mi++){ fresh[no][mi] = sigEntry; }
+  await window.storage.set(STORAGE_KEY_SIGN, JSON.stringify(fresh), true);
+  STATE.signatures = fresh;
+}
+async function mergeAndClearSignature(no){
+  await window.storage.refreshShared();
+  const fresh = await loadSignatures();
+  if(fresh[no]){ for(let mi=0; mi<12; mi++){ delete fresh[no][mi]; } }
+  await window.storage.set(STORAGE_KEY_SIGN, JSON.stringify(fresh), true);
+  STATE.signatures = fresh;
+}
 async function loadApproval(){
   try{
     const res = await window.storage.get(STORAGE_KEY_APPROVAL, true);
@@ -1354,6 +1374,15 @@ async function loadApproval(){
 }
 async function saveApproval(){
   await window.storage.set(STORAGE_KEY_APPROVAL, JSON.stringify(STATE.approval), true);
+}
+// Sama seperti mergeAndSaveSignature, tapi untuk tanda tangan "Mengetahui" (approval).
+async function mergeAndSaveApproval(approverNo, apprEntry){
+  await window.storage.refreshShared();
+  const fresh = await loadApproval();
+  if(!fresh[approverNo]) fresh[approverNo] = {};
+  for(let mi=0; mi<12; mi++){ fresh[approverNo][mi] = apprEntry; }
+  await window.storage.set(STORAGE_KEY_APPROVAL, JSON.stringify(fresh), true);
+  STATE.approval = fresh;
 }
 async function loadProgramRutin(){
   const pr = clone(PROGRAM_RUTIN);
@@ -3434,15 +3463,10 @@ function renderReport(){
     if(btn) btn.addEventListener('click', ()=>openSignPad(p.no, p.nama+' — '+bulanIdxLabelFull(bulanIdx)));
     const clr = document.getElementById('clearBtn-'+p.no);
     if(clr) clr.addEventListener('click', async ()=>{
-      const prevAll = clone(STATE.signatures[p.no]||{});
-      if(STATE.signatures[p.no]){
-        for(let mi=0; mi<12; mi++){ delete STATE.signatures[p.no][mi]; }
-      }
       try{
-        await saveSignatures();
+        await mergeAndClearSignature(p.no);
         renderReport();
       }catch(e){
-        STATE.signatures[p.no] = prevAll;
         alert('Gagal menghapus tanda tangan di server pusat.\n\n'+(e && e.message ? e.message : e));
       }finally{ updateSyncBadge(); }
     });
@@ -3580,28 +3604,16 @@ function openSignPad(targetNo, label){
       const bulanIdx = STATE.reportBulanIdx;
       if(typeof padTargetNo==='string' && padTargetNo.indexOf('APPROVAL:')===0){
         const approverNo = Number(padTargetNo.split(':')[1]);
-        if(!STATE.approval[approverNo]) STATE.approval[approverNo] = {};
         // Tanda tangan "Mengetahui" juga berlaku untuk SEMUA bulan (Jan–Des) sekali TTD,
         // sama seperti tanda tangan pejabat penanggung jawab — tidak perlu diulang tiap bulan.
-        const prevAll = clone(STATE.approval[approverNo]);
         const apprEntry = { dataURL, ts: new Date().toISOString(), by: STATE.user.nama };
-        for(let mi=0; mi<12; mi++){ STATE.approval[approverNo][mi] = apprEntry; }
-        try{ await saveApproval(); }catch(e){
-          STATE.approval[approverNo] = prevAll;
-          throw e;
-        }
+        await mergeAndSaveApproval(approverNo, apprEntry);
       } else {
         const no = Number(padTargetNo);
-        if(!STATE.signatures[no]) STATE.signatures[no] = {};
         // Tanda tangan berlaku untuk SEMUA bulan (Jan–Des), bukan hanya bulan yang
         // sedang aktif dipilih di halaman Laporan — jadi pejabat cukup TTD sekali saja.
-        const prevSigAll = clone(STATE.signatures[no]);
         const sigEntry = { dataURL, name: STATE.user.nama, ts: new Date().toISOString() };
-        for(let mi=0; mi<12; mi++){ STATE.signatures[no][mi] = sigEntry; }
-        try{ await saveSignatures(); }catch(e){
-          STATE.signatures[no] = prevSigAll;
-          throw e;
-        }
+        await mergeAndSaveSignature(no, sigEntry);
       }
       bg.classList.remove('active');
       renderReport();
