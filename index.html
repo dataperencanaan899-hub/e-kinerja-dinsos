@@ -1322,6 +1322,17 @@ async function loadAllSections(){
         if(match){ r.months = match.months.slice(); r.synced = true; break; }
       }
     });
+    // ---- Gabungkan Upaya / Hambatan / Rencana Tindak Lanjut dari Seksi/Sub Bagian anak ----
+    // Sama seperti Aktivitas & Kinerja Utama di atas: Kepala Bidang/Sekretaris tidak lagi
+    // mengisi ulang kolom Upaya, Hambatan, dan Rencana Tindak Lanjut secara manual — isinya
+    // digabung otomatis (live) dari isian masing-masing Kepala Seksi/Kepala Sub Bagian di
+    // bawahnya menjadi satu kalimat/paragraf gabungan (dipisah per Seksi/Sub Bagian).
+    ['upaya','hambatan','rencana'].forEach(field=>{
+      const parts = childSecs
+        .map(cs => ({ label: cs.header, text: (cs.penjelasan && cs.penjelasan[field] ? String(cs.penjelasan[field]).trim() : '') }))
+        .filter(p => p.text);
+      bidangSec.penjelasan[field] = parts.length ? parts.map(p => `${p.label}: ${p.text}`).join(' ') : '';
+    });
   });
   // Baris lain yang dikunci lewat mekanisme khusus (mis. Kalkulator PPKS Admin) —
   // tetap ditandai tersinkron/terkunci meski bukan lewat rumus otomatis di atas.
@@ -2107,7 +2118,7 @@ function openSection(idx){
     </div>
     ${sec.locked ? `
     <div class="empty-note" style="margin-bottom:14px; background:#eef6ee; border-color:#bfe0bf;">
-      <b>Terkoneksi otomatis dari ${sec.ownerNo===2?'Kepala Sub Bagian':'Kepala Seksi'}.</b> Sebagai ${sec.ownerNo===2?'Sekretaris':'Kepala Bidang'}, tabel Realisasi Kinerja di atas mengikuti (live) realisasi yang sudah diisi oleh masing-masing ${sec.ownerNo===2?'Kepala Sub Bagian':'Kepala Seksi'} di bawah ${sec.ownerNo===2?'Sekretariat':'Bidang'} ini.${hasFormulaRows?' Sebagian baris Kinerja Utama di bawah juga dihitung otomatis lewat rumus resmi (lihat catatan di bawah tabel).':''} Namun tabel <b>Aktivitas yang Mendukung</b> di bawah tetap dapat Anda edit/koreksi langsung bila diperlukan.
+      <b>Terkoneksi otomatis dari ${sec.ownerNo===2?'Kepala Sub Bagian':'Kepala Seksi'}.</b> Sebagai ${sec.ownerNo===2?'Sekretaris':'Kepala Bidang'}, tabel Realisasi Kinerja di atas mengikuti (live) realisasi yang sudah diisi oleh masing-masing ${sec.ownerNo===2?'Kepala Sub Bagian':'Kepala Seksi'} di bawah ${sec.ownerNo===2?'Sekretariat':'Bidang'} ini.${hasFormulaRows?' Sebagian baris Kinerja Utama di bawah juga dihitung otomatis lewat rumus resmi (lihat catatan di bawah tabel).':''} Kolom Upaya, Hambatan, dan Rencana Tindak Lanjut di bawah juga otomatis digabung (live) dari isian masing-masing ${sec.ownerNo===2?'Kepala Sub Bagian':'Kepala Seksi'} tersebut menjadi satu kalimat gabungan. Namun tabel <b>Aktivitas yang Mendukung</b> di bawah tetap dapat Anda edit/koreksi langsung bila diperlukan.
     </div>` : ''}
     ${hasFormulaRows ? `
     <div class="empty-note" style="margin-bottom:14px; background:#fbf6e8; border-color:#e3c883;">
@@ -2207,7 +2218,7 @@ function openSection(idx){
       <div class="panel-head">
         <div>
           <h3>Penjelasan per Indikator Kinerja</h3>
-          <div class="meta">Upaya, hambatan, dan rencana tindak lanjut diisi oleh penanggung jawab bagian/seksi. Catatan atasan diisi oleh Eselon IV/Admin, dan Tanggapan diisi kembali oleh penanggung jawab.</div>
+          <div class="meta">Upaya, hambatan, dan rencana tindak lanjut diisi oleh penanggung jawab bagian/seksi. Khusus Kepala Bidang dan Sekretaris, ketiga kolom tersebut otomatis digabung (live) dari isian Kepala Seksi/Kepala Sub Bagian di bawahnya menjadi satu kalimat gabungan, sehingga tidak perlu diisi ulang manual. Catatan atasan diisi oleh Eselon IV/Admin, dan Tanggapan diisi kembali oleh penanggung jawab.</div>
         </div>
       </div>
       <div class="penjelasan-wrap">
