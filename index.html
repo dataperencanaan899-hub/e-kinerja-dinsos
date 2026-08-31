@@ -2482,8 +2482,8 @@ function aktRowHtml(a, ai, canEdit, activeMonths, isAdmin){
     <td class="num ${canEdit?'':'readonly'}">${canEdit
       ? `<input class="akt-satuan-input" type="text" data-ai="${ai}" value="${esc(a.satuan)}" style="width:70px;">`
       : (a.satuan||'-')}</td>
-    <td class="num ${isAdmin?'':'readonly'}">${isAdmin
-      ? `<input class="akt-target-input" type="text" inputmode="decimal" data-ai="${ai}" value="${a.target!=null?a.target:''}" style="width:60px;">`
+    <td class="num ${canEdit?'':'readonly'}">${canEdit
+      ? `<input class="akt-target-input" type="text" inputmode="decimal" data-ai="${ai}" value="${a.target!=null?a.target:''}" placeholder="-" style="width:60px;">`
       : fmtNum(a.target, a.target<3?2:0)}</td>
     ${months.map(mi=>{ const m=a.months[mi]; return `
       <td class="month ${isTW2(mi)?'tw2':''}">
