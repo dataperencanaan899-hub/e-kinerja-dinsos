@@ -1384,6 +1384,46 @@ async function mergeAndSaveApproval(approverNo, apprEntry){
   await window.storage.set(STORAGE_KEY_APPROVAL, JSON.stringify(fresh), true);
   STATE.approval = fresh;
 }
+// Perbaikan data lama: sebelumnya tanda tangan hanya tersimpan di satu bulan
+// (mis. Juni) untuk sebagian akun. Fungsi ini memeriksa SEMUA akun; jika ada
+// tanda tangan yang tersimpan di bulan manapun tapi belum lengkap di 12 bulan,
+// maka tanda tangan tersebut (yang paling baru) disalin ke seluruh bulan
+// Januari–Desember, lalu disimpan kembali ke server pusat.
+async function fixSignaturesAcrossAllMonths(){
+  function pickLatestAndFill(dataObj){
+    let changed = false;
+    for(const key of Object.keys(dataObj)){
+      const monthsObj = dataObj[key] || {};
+      const entries = Object.keys(monthsObj).map(mi=>monthsObj[mi]).filter(Boolean);
+      if(entries.length===0) continue;
+      let best = entries[0];
+      for(const e of entries){ if(e && e.ts && (!best.ts || e.ts > best.ts)) best = e; }
+      for(let mi=0; mi<12; mi++){
+        const cur = monthsObj[mi];
+        if(!cur || cur.dataURL !== best.dataURL){
+          monthsObj[mi] = best;
+          changed = true;
+        }
+      }
+      dataObj[key] = monthsObj;
+    }
+    return changed;
+  }
+
+  const sig = await loadSignatures();
+  const sigChanged = pickLatestAndFill(sig);
+  if(sigChanged){
+    await window.storage.set(STORAGE_KEY_SIGN, JSON.stringify(sig), true);
+  }
+  STATE.signatures = sig;
+
+  const appr = await loadApproval();
+  const apprChanged = pickLatestAndFill(appr);
+  if(apprChanged){
+    await window.storage.set(STORAGE_KEY_APPROVAL, JSON.stringify(appr), true);
+  }
+  STATE.approval = appr;
+}
 async function loadProgramRutin(){
   const pr = clone(PROGRAM_RUTIN);
   for(const ownerNo of PROGRAM_RUTIN_OWNERS){
@@ -1552,8 +1592,7 @@ async function refreshFromServer(){
       await loadPejabatData();
       await loadAdminCode();
       STATE.sections = await loadAllSections();
-      STATE.signatures = await loadSignatures();
-      STATE.approval = await loadApproval();
+      await fixSignaturesAcrossAllMonths();
       STATE.programRutin = await loadProgramRutin();
       STATE.ppks = await loadPPKSCalc();
       renderShell();
@@ -1667,8 +1706,7 @@ async function enterApp(){
   // dari komputer/HP lain langsung terlihat, bukan hanya terlihat di perangkat tempat mengisi.
   try{ await window.storage.refreshShared(); }catch(e){ /* kalau gagal, lanjut pakai cache/cadangan terakhir */ }
   STATE.sections = await loadAllSections();
-  STATE.signatures = await loadSignatures();
-  STATE.approval = await loadApproval();
+  await fixSignaturesAcrossAllMonths();
   STATE.programRutin = await loadProgramRutin();
   STATE.ppks = await loadPPKSCalc();
   renderShell();
