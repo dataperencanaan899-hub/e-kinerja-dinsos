@@ -510,7 +510,8 @@ const BIDANG_ROW_FORMULA = {
 // Baris "Kinerja Utama" yang dihitung lewat mekanisme khusus lain (mis. Kalkulator PPKS
 // milik Admin) dan karena itu tetap terkunci bagi pemilik bagian (bukan lewat rumus di atas).
 const EXTRA_LOCKED_ROWS = [
-  { ownerNo:5, rowIdx:0 } // Bidang Rehabilitasi Sosial: "Persentase PPKS yang dilayani & direhabilitasi di dalam panti" -> Kalkulator PPKS (Admin)
+  { ownerNo:5, rowIdx:0 }, // Bidang Rehabilitasi Sosial: "Persentase PPKS yang dilayani & direhabilitasi di dalam panti" -> Kalkulator PPKS (Admin)
+  { ownerNo:1, rowIdx:2 }  // Kepala Dinas Sosial: "Tingkat Partisipasi PSKS dalam penyelenggaraan kesejahteraan sosial" -> Kalkulator Partisipasi PSKS (Admin)
 ];
 function rowFormulaFor(ownerNo, ri){
   const arr = BIDANG_ROW_FORMULA[ownerNo] || BIDANG_ROW_FORMULA[String(ownerNo)];
@@ -722,6 +723,7 @@ const STORAGE_KEY_APPROVAL_LEGACY = 'kinerja:approval';
 const STORAGE_KEY_PROGRUT = 'kinerja:programrutin:'; // + ownerNo
 const STORAGE_KEY_PEJABAT = 'kinerja:pejabat'; // daftar pejabat (bisa diedit Admin: nama/jabatan/NIP/kode akses)
 const STORAGE_KEY_PPKS = 'kinerja:ppksCalc2026'; // data mentah kalkulator Tabel Perhitungan PPKS (khusus Admin)
+const STORAGE_KEY_PSKS_PARTISIPASI = 'kinerja:psksPartisipasi2026'; // data mentah kalkulator Tingkat Partisipasi PSKS (khusus Admin)
 
 // Bobot tetap sesuai formula resmi Perhitungan PPKS (lihat lembar kerja "Perhitungan PPKS 2026").
 const PPKS_BOBOT = { korbanBencanaAlam:0.40, korbanBencanaSosial:0.15, fakirMiskin:0.05 };
@@ -746,6 +748,65 @@ const PPKS_CALC_DEFAULT = {
     ]
   }
 };
+
+/* ============================================================
+   PERHITUNGAN TINGKAT PARTISIPASI PSKS (khusus Admin)
+   Dasar perhitungan indikator "Tingkat Partisipasi PSKS dalam
+   penyelenggaraan kesejahteraan sosial" milik Kepala Dinas Sosial.
+   Rumus:
+     Capaian = ( Σ realisasi kumulatif 6 baris sumber di bawah )
+               ÷ ( Jumlah PSKS Se-Kalimantan Selatan )
+   "Jumlah PSKS Se-Kalimantan Selatan" adalah angka pembagi yang
+   HANYA dapat diubah oleh Admin lewat halaman "Tabel Partisipasi
+   PSKS" (bukan bagian dari data Seksi manapun).
+   ============================================================ */
+const PSKS_PARTISIPASI_SOURCES = [
+  { ownerNo:19, rowIdx:0 }, // Seksi Pemberdayaan Potensi SDKS & Kelembagaan Sosial: Jumlah PSKS yang memperoleh sertifikat kelulusan
+  { ownerNo:19, rowIdx:1 }, // ...: Jumlah Penyuluh Sosial/PSM/Peksos/PSM/TKSK yang Meningkat Kapasitasnya
+  { ownerNo:19, rowIdx:2 }, // ...: Jumlah Lembaga Kesejahteraan Sosial yang Meningkat Kapasitasnya Kewenangan Provinsi
+  { ownerNo:20, rowIdx:0 }, // Seksi Pemberdayaan Keluarga & Pengelolaan Sumber Dana Sosial: Jumlah Keluarga yang Meningkat Kapasitasnya Kewenangan Provinsi
+  { ownerNo:15, rowIdx:0 }, // Seksi Kerja Sama Penanganan Bencana: Jumlah Taruna Siaga Bencana (Tagana) yang terampil dalam menangani bencana Alam
+  { ownerNo:15, rowIdx:1 }, // Seksi Kerja Sama Penanganan Bencana: Jumlah pelopor perdamaian yang terampil dalam menangani bencana sosial
+];
+const PSKS_PARTISIPASI_DEFAULT = {
+  jumlahSekalsel: null // Jumlah PSKS se-Kalsel (pembagi) — wajib diisi Admin, editable kapan saja
+};
+async function loadPSKSPartisipasi(){
+  const data = clone(PSKS_PARTISIPASI_DEFAULT);
+  try{
+    const raw = await sharedStorageGet(STORAGE_KEY_PSKS_PARTISIPASI);
+    if(raw){
+      const saved = JSON.parse(raw);
+      if(saved && saved.jumlahSekalsel!==undefined) data.jumlahSekalsel = saved.jumlahSekalsel;
+    }
+  }catch(e){ /* belum tersimpan, pakai default */ }
+  return data;
+}
+async function savePSKSPartisipasi(){
+  const payload = {
+    jumlahSekalsel: STATE.psksPartisipasi.jumlahSekalsel,
+    updatedBy: STATE.user.nama, updatedAt: new Date().toISOString()
+  };
+  await sharedStorageSet(STORAGE_KEY_PSKS_PARTISIPASI, JSON.stringify(payload));
+}
+// Menghitung Tingkat Partisipasi PSKS sampai dengan bulan tertentu (kumulatif Jan..bulanIdx).
+function psksPartisipasiCalc(bulanIdx){
+  const eff = bulanIdx===undefined ? 11 : bulanIdx;
+  const items = PSKS_PARTISIPASI_SOURCES.map(s=>{
+    const sec = STATE.sections.find(x=>x.ownerNo===s.ownerNo);
+    const row = sec ? sec.rows[s.rowIdx] : null;
+    const jumlah = row ? sumMonthsUpTo(row.months, eff) : 0;
+    return {
+      label: row ? row.ind : ('Seksi #'+s.ownerNo),
+      secName: sec ? sec.header : ('Seksi #'+s.ownerNo),
+      jumlah
+    };
+  });
+  const numerator = items.reduce((a,c)=>a+(Number(c.jumlah)||0), 0);
+  const denom = Number(STATE.psksPartisipasi.jumlahSekalsel)||0;
+  const capaian = denom ? numerator/denom : null;
+  return { items, numerator, denom, capaian };
+}
 
 /* ============ REKAP PUSAT ONLINE (Google Sheets via Google Apps Script) ============
    Sama seperti pada aplikasi "Laporan Kinerja Staf", data Upaya/Hambatan/Rencana
@@ -1249,6 +1310,8 @@ async function loadAllSections(){
               sections[i].rows[ri].months = sr.months;
               if(sr.target2026!==undefined) sections[i].rows[ri].target2026 = sr.target2026;
               if(sr.capaianLalu!==undefined) sections[i].rows[ri].capaianLalu = sr.capaianLalu;
+              if(sr.ku!==undefined) sections[i].rows[ri].ku = sr.ku;
+              if(sr.ind!==undefined) sections[i].rows[ri].ind = sr.ind;
             }
           });
         }
@@ -1345,7 +1408,7 @@ async function loadAllSections(){
 async function saveSection(idx){
   const sec = STATE.sections[idx];
   const payload = {
-    rows: sec.rows.map(r=>({months:r.months, target2026:r.target2026, capaianLalu:r.capaianLalu})),
+    rows: sec.rows.map(r=>({months:r.months, target2026:r.target2026, capaianLalu:r.capaianLalu, ku:r.ku, ind:r.ind})),
     akt: sec.akt.map(a=>({text:a.text, satuan:a.satuan, target:a.target, months:a.months})),
     aktManual: sec.aktManual,
     penjelasan: sec.penjelasan,
@@ -1622,6 +1685,7 @@ async function refreshFromServer(){
       await fixSignaturesAcrossAllMonths();
       STATE.programRutin = await loadProgramRutin();
       STATE.ppks = await loadPPKSCalc();
+      STATE.psksPartisipasi = await loadPSKSPartisipasi();
       renderShell();
       if(STATE.user.role==='admin') renderAdminDashboard(); else renderUserDashboard();
     }
@@ -1736,6 +1800,7 @@ async function enterApp(){
   await fixSignaturesAcrossAllMonths();
   STATE.programRutin = await loadProgramRutin();
   STATE.ppks = await loadPPKSCalc();
+  STATE.psksPartisipasi = await loadPSKSPartisipasi();
   renderShell();
   if(STATE.user.role==='admin') renderAdminDashboard();
   else renderUserDashboard();
@@ -1761,6 +1826,7 @@ function topbarHtml(){
       ${u.role==='admin' ? `<button class="btn no-print" id="navRekapPusat">🔒📊 Rekap Pusat (Google Sheets)</button>` : ''}
       ${u.role==='admin' ? `<button class="btn no-print" id="navPegawai">🛠 Kelola Pegawai</button>` : ''}
       ${u.role==='admin' ? `<button class="btn no-print" id="navPPKS">🧮 Tabel PPKS</button>` : ''}
+      ${u.role==='admin' ? `<button class="btn no-print" id="navPSKSPartisipasi">🧮 Tabel Partisipasi PSKS</button>` : ''}
       ${u.role==='admin' ? `<button class="btn no-print" id="navAdmin">Dasbor Admin</button>` : `<button class="btn no-print" id="navMine">Bagian Saya</button>`}
       <div class="who">
         <div class="avatar">${u.role==='admin' ? 'AD' : initials(u.nama)}</div>
@@ -1796,6 +1862,7 @@ function renderShell(){
     document.getElementById('navRekapPusat').addEventListener('click', renderRekapPusat);
     document.getElementById('navPegawai').addEventListener('click', renderKelolaPegawai);
     document.getElementById('navPPKS').addEventListener('click', renderPPKSCalc);
+    document.getElementById('navPSKSPartisipasi').addEventListener('click', renderPSKSPartisipasiCalc);
   } else {
     document.getElementById('navMine').addEventListener('click', ()=>openSection(myOwnedIndices()[0]));
   }
@@ -2285,6 +2352,26 @@ function openSection(idx){
         });
       });
     });
+    // "Kinerja Utama" (ku) & "Indikator" (ind): hanya Admin yang melihat elemen input ini
+    // (lihat rowHtml/rowCardHtml — dirender sebagai teks biasa untuk pengguna lain).
+    main.querySelectorAll('textarea.row-ku-input').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const ri = Number(inp.dataset.ri);
+        sec.rows[ri].ku = inp.value;
+        main.querySelectorAll(`textarea.row-ku-input[data-ri="${ri}"]`).forEach(other=>{
+          if(other!==inp) other.value = inp.value;
+        });
+      });
+    });
+    main.querySelectorAll('textarea.row-ind-input').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const ri = Number(inp.dataset.ri);
+        sec.rows[ri].ind = inp.value;
+        main.querySelectorAll(`textarea.row-ind-input[data-ri="${ri}"]`).forEach(other=>{
+          if(other!==inp) other.value = inp.value;
+        });
+      });
+    });
     main.querySelectorAll('input.akt-month-input').forEach(inp=>{
       inp.addEventListener('input', ()=>{
         const ai = Number(inp.dataset.ai), mi = Number(inp.dataset.mi);
@@ -2407,8 +2494,12 @@ function rowHtml(r, ri, canEdit, activeMonths, isAdmin){
   return `
   <tr>
     <td class="num">${r.no}</td>
-    <td class="ku">${r.ku}</td>
-    <td class="ind">${r.ind}</td>
+    <td class="ku ${isAdmin?'':'readonly'}">${isAdmin
+      ? `<textarea class="row-ku-input" rows="2" data-ri="${ri}" style="width:100%; min-width:180px; font:inherit; border:1px solid var(--line); border-radius:6px; padding:4px 6px; resize:vertical;">${(r.ku||'').replace(/</g,'&lt;')}</textarea>`
+      : (r.ku||'')}</td>
+    <td class="ind ${isAdmin?'':'readonly'}">${isAdmin
+      ? `<textarea class="row-ind-input" rows="2" data-ri="${ri}" style="width:100%; min-width:200px; font:inherit; border:1px solid var(--line); border-radius:6px; padding:4px 6px; resize:vertical;">${(r.ind||'').replace(/</g,'&lt;')}</textarea>`
+      : r.ind}</td>
     <td class="num ${isAdmin?'':'readonly'}">${isAdmin
       ? `<input class="row-caplalu-input" type="text" inputmode="decimal" data-ri="${ri}" value="${capLaluInputDisplay(r)}" style="width:74px;">${isPersenRow(r)?'<span class="unit-suffix">%</span>':''}`
       : capLalu}</td>
@@ -2445,9 +2536,13 @@ function rowCardHtml(r, ri, canEdit, activeMonths, isAdmin){
   <div class="ind-card">
     <div class="ind-card-head">
       <span class="no">${r.no}</span>
-      <div>
-        <div class="ku">${r.ku}</div>
-        <div class="ind">${r.ind}</div>
+      <div style="flex:1; min-width:0;">
+        ${isAdmin
+          ? `<textarea class="row-ku-input" rows="2" data-ri="${ri}" style="width:100%; font:inherit; font-weight:700; border:1px solid var(--line); border-radius:6px; padding:4px 6px; margin-bottom:4px; resize:vertical;">${(r.ku||'').replace(/</g,'&lt;')}</textarea>`
+          : `<div class="ku">${r.ku||''}</div>`}
+        ${isAdmin
+          ? `<textarea class="row-ind-input" rows="2" data-ri="${ri}" style="width:100%; font:inherit; border:1px solid var(--line); border-radius:6px; padding:4px 6px; resize:vertical;">${(r.ind||'').replace(/</g,'&lt;')}</textarea>`
+          : `<div class="ind">${r.ind}</div>`}
       </div>
     </div>
     <div class="stat-row">
@@ -3235,6 +3330,178 @@ function bindPPKSKabidInputs(){
       }
     });
   });
+}
+
+// ---------------- Tabel Perhitungan Tingkat Partisipasi PSKS (khusus Admin) ----------------
+// Menjumlahkan realisasi kumulatif 6 indikator sumber (Seksi Pemberdayaan Potensi SDKS &
+// Kelembagaan Sosial, Seksi Pemberdayaan Keluarga & Pengelolaan Sumber Dana Sosial, dan
+// Seksi Kerja Sama Penanganan Bencana), lalu membaginya dengan "Jumlah PSKS Se-Kalsel"
+// (angka pembagi yang hanya bisa diubah Admin di halaman ini). Hasilnya menjadi dasar
+// realisasi indikator "Tingkat Partisipasi PSKS dalam penyelenggaraan kesejahteraan
+// sosial" milik Kepala Dinas Sosial — diterapkan lewat tombol "Terapkan" di bawah.
+function renderPSKSPartisipasiCalc(){
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Khusus Admin</div>
+        <h2>Tabel Perhitungan Tingkat Partisipasi PSKS</h2>
+        <div class="sub">Alat bantu hitung yang menjadi dasar realisasi indikator "Tingkat Partisipasi PSKS dalam penyelenggaraan kesejahteraan sosial" (Kepala Dinas Sosial). Nilai 6 baris sumber di bawah diambil otomatis (live) dari realisasi kumulatif Seksi terkait; hanya "Jumlah PSKS Se-Kalsel" yang perlu diisi manual — hanya Administrator yang dapat mengakses dan mengisi halaman ini.</div>
+      </div>
+      <div class="tabs">
+        <button class="tab" id="backBtnPSKSPartisipasi">&larr; Kembali</button>
+      </div>
+    </div>
+    <div id="psksPartisipasiPanel">${psksPartisipasiPanelHtml()}</div>
+    <div class="panel-actions" style="margin-top:16px; border-top:none; background:transparent; padding:0; flex-wrap:wrap; gap:10px;">
+      <span class="saved-flag" id="psksPartisipasiSavedFlag">Data perhitungan tersimpan.</span>
+      <button class="btn ghost" id="btnResetPSKSPartisipasi">Muat Ulang dari Server</button>
+      <button class="btn primary" id="btnSavePSKSPartisipasi">Simpan Data Perhitungan</button>
+    </div>
+  `;
+  document.getElementById('backBtnPSKSPartisipasi').addEventListener('click', renderAdminDashboard);
+  bindPSKSPartisipasiCalc();
+}
+
+function psksPartisipasiPanelHtml(){
+  const target = findIndicatorRow(1, 'Tingkat Partisipasi PSKS');
+  const rowDinas = target ? STATE.sections[target.idx].rows[target.ri] : null;
+  const bulanIdx = (STATE.psksPartisipasiBulan===undefined) ? 5 : STATE.psksPartisipasiBulan;
+  const calc = psksPartisipasiCalc(bulanIdx);
+  return `
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h3>Perhitungan Tingkat Partisipasi PSKS</h3>
+        <div class="meta">Capaian = ( &Sigma; realisasi kumulatif 6 baris sumber di bawah, Januari s.d bulan terpilih ) &divide; ( Jumlah PSKS Se-Kalsel ).</div>
+      </div>
+      <div class="tabs no-print" style="align-items:center;">
+        <label style="font-size:12px; color:var(--ink-soft); margin-right:6px;">Realisasi kumulatif s.d:</label>
+        <select id="psksPartisipasiBulan" style="padding:7px 9px; border-radius:7px; border:1px solid var(--line); font-size:12.5px;">
+          ${NAMA_BULAN_FULL.map((nm,mi)=>`<option value="${mi}" ${bulanIdx===mi?'selected':''}>${nm}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="kinerja" style="min-width:640px;">
+        <thead><tr><th style="min-width:320px;">Indikator Sumber</th><th style="min-width:140px;">Seksi</th><th>Jumlah (kumulatif)</th></tr></thead>
+        <tbody>
+          ${calc.items.map(it=>`
+          <tr>
+            <td>${it.label}</td>
+            <td style="font-size:12px; color:var(--ink-soft);">${it.secName}</td>
+            <td class="num readonly" data-psks-item>${fmtNum(it.jumlah)}</td>
+          </tr>`).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="background:var(--paper-2); font-weight:700; color:var(--navy-900);">
+            <td colspan="2">Jumlah (pembilang)</td>
+            <td class="num" data-psks-numerator>${fmtNum(calc.numerator)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="panel-actions no-print" style="margin-top:14px; border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap; gap:10px;">
+      <label style="font-size:12.5px; color:var(--ink-soft);">Jumlah PSKS Se-Kalsel (pembagi):</label>
+      <input id="psksSekalselInput" type="text" inputmode="decimal" value="${calc.denom || (STATE.psksPartisipasi.jumlahSekalsel!=null?STATE.psksPartisipasi.jumlahSekalsel:'')}" style="width:130px; padding:6px 8px; border-radius:6px; border:1px solid var(--line);" placeholder="mis. 100000">
+    </div>
+    <div class="ind-card-foot" style="margin-top:14px; padding:12px 14px; background:var(--paper-2); border-radius:8px; flex-wrap:wrap; gap:10px;">
+      <span style="font-weight:700; color:var(--navy-900);">Capaian (Jumlah &divide; Jumlah PSKS Se-Kalsel)</span>
+      <span class="pct ${pctClass(calc.capaian)}" data-psks-capaian style="font-size:16px;">${calc.capaian===null?'-':fmtNum(calc.capaian*100,2)+'%'}</span>
+    </div>
+    <div class="meta" style="margin-top:8px;">Target indikator saat ini (Kepala Dinas Sosial): <b>${rowDinas ? fmtRowVal(rowDinas, rowDinas.target2026) : 'baris indikator tidak ditemukan'}</b>${rowDinas ? ' &mdash; kolom Target dapat diubah Admin langsung di halaman Tinjauan Admin bagian tersebut.' : ''}</div>
+    <div class="panel-actions no-print" style="margin-top:14px; border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap; gap:10px;">
+      <label style="font-size:12.5px; color:var(--ink-soft);">Terapkan ke bulan:</label>
+      <select id="psksPartisipasiApplyBulan" style="padding:6px 8px; border-radius:6px; border:1px solid var(--line);">
+        ${NAMA_BULAN_FULL.map((nm,mi)=>`<option value="${mi}" ${mi===bulanIdx?'selected':''}>${nm}</option>`).join('')}
+      </select>
+      <button class="btn primary" id="btnApplyPSKSPartisipasi" type="button">Terapkan ke Kepala Dinas Sosial</button>
+      <span class="saved-flag" id="psksPartisipasiApplied">Diterapkan ke bagian Kepala Dinas Sosial.</span>
+    </div>
+  </div>`;
+}
+
+function refreshPSKSPartisipasiCalc(){
+  const bulanIdx = (STATE.psksPartisipasiBulan===undefined) ? 5 : STATE.psksPartisipasiBulan;
+  const calc = psksPartisipasiCalc(bulanIdx);
+  const main = document.getElementById('main');
+  main.querySelectorAll('[data-psks-item]').forEach((el,i)=>{ if(calc.items[i]) el.textContent = fmtNum(calc.items[i].jumlah); });
+  main.querySelectorAll('[data-psks-numerator]').forEach(el=>{ el.textContent = fmtNum(calc.numerator); });
+  main.querySelectorAll('[data-psks-capaian]').forEach(el=>{
+    el.textContent = calc.capaian===null?'-':fmtNum(calc.capaian*100,2)+'%';
+    el.className = el.className.replace(/\b(good|mid|low)\b/g,'').trim() + ' ' + pctClass(calc.capaian);
+  });
+}
+
+function bindPSKSPartisipasiCalc(){
+  const main = document.getElementById('main');
+  const bulanSelect = document.getElementById('psksPartisipasiBulan');
+  if(bulanSelect){
+    bulanSelect.addEventListener('change', ()=>{
+      STATE.psksPartisipasiBulan = Number(bulanSelect.value);
+      document.getElementById('psksPartisipasiPanel').innerHTML = psksPartisipasiPanelHtml();
+      bindPSKSPartisipasiInputs();
+    });
+  }
+  bindPSKSPartisipasiInputs();
+
+  const btnSave = document.getElementById('btnSavePSKSPartisipasi');
+  if(btnSave){
+    btnSave.addEventListener('click', async ()=>{
+      btnSave.disabled = true; const label = btnSave.textContent; btnSave.textContent = 'Menyimpan...';
+      try{
+        await savePSKSPartisipasi();
+        const f = document.getElementById('psksPartisipasiSavedFlag');
+        f.classList.add('show'); setTimeout(()=>f.classList.remove('show'), 2400);
+      }catch(err){
+        alert('Gagal menyimpan data perhitungan Partisipasi PSKS ke server pusat.\n\n'+(err && err.message ? err.message : err)+'\n\nPerubahan tetap tersimpan sementara di komputer ini.');
+      }finally{
+        btnSave.disabled = false; btnSave.textContent = label;
+        updateSyncBadge();
+      }
+    });
+  }
+  const btnReset = document.getElementById('btnResetPSKSPartisipasi');
+  if(btnReset){
+    btnReset.addEventListener('click', async ()=>{
+      STATE.psksPartisipasi = await loadPSKSPartisipasi();
+      renderPSKSPartisipasiCalc();
+    });
+  }
+}
+
+function bindPSKSPartisipasiInputs(){
+  const main = document.getElementById('main');
+  const inpSekalsel = document.getElementById('psksSekalselInput');
+  if(inpSekalsel){
+    inpSekalsel.addEventListener('input', ()=>{
+      let v = parseFloat(inpSekalsel.value.replace(',','.'));
+      STATE.psksPartisipasi.jumlahSekalsel = isNaN(v) ? null : v;
+      refreshPSKSPartisipasiCalc();
+    });
+  }
+  const btnApply = document.getElementById('btnApplyPSKSPartisipasi');
+  if(btnApply){
+    btnApply.addEventListener('click', async ()=>{
+      const target = findIndicatorRow(1, 'Tingkat Partisipasi PSKS');
+      if(!target){ alert('Baris indikator "Tingkat Partisipasi PSKS dalam penyelenggaraan kesejahteraan sosial" tidak ditemukan pada bagian Kepala Dinas Sosial.'); return; }
+      const applyBulan = Number(document.getElementById('psksPartisipasiApplyBulan').value);
+      const calc = psksPartisipasiCalc(applyBulan);
+      if(calc.capaian===null){ alert('Jumlah PSKS Se-Kalsel masih kosong/0 — isi dulu angka pembagi di atas sebelum diterapkan.'); return; }
+      STATE.sections[target.idx].rows[target.ri].months[applyBulan] = calc.capaian;
+      btnApply.disabled = true; const label = btnApply.textContent; btnApply.textContent = 'Menerapkan...';
+      try{
+        await saveSection(target.idx);
+        const f = document.getElementById('psksPartisipasiApplied');
+        f.classList.add('show'); setTimeout(()=>f.classList.remove('show'), 2400);
+      }catch(err){
+        alert('Gagal menyimpan ke bagian Kepala Dinas Sosial.\n\n'+(err && err.message ? err.message : err));
+      }finally{
+        btnApply.disabled = false; btnApply.textContent = label;
+        updateSyncBadge();
+      }
+    });
+  }
 }
 
 // ---------------- Report / Signature page ----------------
