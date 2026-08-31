@@ -3291,11 +3291,12 @@ function repBlockHtml(p, bulanIdx){
    untuk para Kasubbag, dan masing-masing Kepala Bidang untuk para Kasi di bawahnya. */
 function repSignBlockHtml(p, bulanIdx){
   const kadis = PEJABAT_LIST[0];
-  const sig = (STATE.signatures[p.no]||{})[bulanIdx];
+  const sigIdx = upToEffIdx(bulanIdx);
+  const sig = (STATE.signatures[p.no]||{})[sigIdx];
 
   if(p.no === kadis.no){
     // Kepala Dinas: cukup satu kolom pengesahan (tidak "mengetahui diri sendiri").
-    const kadisSig = sig || ((STATE.approval[kadis.no]||{})[bulanIdx]);
+    const kadisSig = sig || ((STATE.approval[kadis.no]||{})[sigIdx]);
     return `
     <div class="rep-sign-wrap" style="justify-content:center;">
       <div class="rep-sign-col">
@@ -3310,7 +3311,7 @@ function repSignBlockHtml(p, bulanIdx){
 
   const mengetahuiNo = mengetahuiNoOf(p.no);
   const mengetahui = PEJABAT_LIST.find(x=>x.no===mengetahuiNo) || kadis;
-  const appr = (STATE.approval[mengetahuiNo]||{})[bulanIdx];
+  const appr = (STATE.approval[mengetahuiNo]||{})[sigIdx];
 
   return `
   <div class="rep-sign-wrap">
@@ -3358,7 +3359,7 @@ function buildApproverGroups(){
 function approveBoxHtml(approverNo, subs, bulanIdx, canSign){
   const approver = PEJABAT_LIST.find(x=>x.no===approverNo);
   if(!approver) return '';
-  const sig = (STATE.approval[approverNo]||{})[bulanIdx];
+  const sig = (STATE.approval[approverNo]||{})[upToEffIdx(bulanIdx)];
   return `
   <div class="approve-box">
     <div class="approve-inner">
@@ -3520,7 +3521,7 @@ function renderReport(){
 
 function signCardHtml(p, bulanIdx){
   const canSign = STATE.user.role==='admin' || STATE.user.no===p.no;
-  const sig = (STATE.signatures[p.no]||{})[bulanIdx];
+  const sig = (STATE.signatures[p.no]||{})[upToEffIdx(bulanIdx)];
   return `
   <div class="sign-card">
     <div class="nm">${p.nama}</div>
