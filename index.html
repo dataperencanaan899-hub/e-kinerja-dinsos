@@ -2309,7 +2309,7 @@ function openSection(idx){
         ${penjelasanFieldHtml('hambatan','Hambatan :', sec.penjelasan.hambatan, canEdit)}
         ${penjelasanFieldHtml('rencana','Rencana Tindak Lanjut :', sec.penjelasan.rencana, canEdit)}
         ${penjelasanFieldHtml('catatanAtasan','Catatan atasan langsung :', sec.penjelasan.catatanAtasan, STATE.user.role==='admin')}
-        ${penjelasanFieldHtml('tanggapan','Tanggapan : (diisi oleh staf terkait catatan atasan langsung)', sec.penjelasan.tanggapan, canEdit)}
+        ${penjelasanFieldHtml('tanggapan','Tanggapan :', sec.penjelasan.tanggapan, canEdit)}
       </div>
     </div>
 
@@ -3600,7 +3600,7 @@ function repBlockHtml(p, bulanIdx){
         ${repPenjelasanRow('Hambatan :', sec.penjelasan.hambatan)}
         ${repPenjelasanRow('Rencana Tindak Lanjut :', sec.penjelasan.rencana)}
         ${repPenjelasanRow('Catatan atasan langsung :', sec.penjelasan.catatanAtasan)}
-        ${repPenjelasanRow('Tanggapan : (diisi oleh staf terkait catatan atasan langsung)', sec.penjelasan.tanggapan)}
+        ${repPenjelasanRow('Tanggapan :', sec.penjelasan.tanggapan)}
       </div>
     `).join('')}
     ${repSignBlockHtml(p, bulanIdx)}
