@@ -640,6 +640,21 @@ function capLaluInputToStore(r, raw){
   if(isNaN(v)) return s;
   return isPersenRow(r) ? v/100 : v;
 }
+// Nilai mentah (angka saja) untuk <input> kolom Target Akhir Renstra yang bisa diedit (khusus admin).
+function targetAkhirInputDisplay(r){
+  const v = r.targetAkhir;
+  if(v===null || v===undefined || v==='') return '';
+  if(typeof v === 'string') return v;
+  return isPersenRow(r) ? fmtNum(v*100, 4) : fmtNum(v);
+}
+// Konversi input Target Akhir Renstra kembali ke nilai yang disimpan.
+function targetAkhirInputToStore(r, raw){
+  const s = String(raw).trim();
+  if(s==='') return null;
+  let v = parseFloat(s.replace(',', '.'));
+  if(isNaN(v)) return null;
+  return isPersenRow(r) ? v/100 : v;
+}
 // Template baku untuk "Catatan atasan langsung : (Admin)" — isinya tetap dipertahankan
 // sebagai isian standar pada setiap bagian/seksi, kecuali Admin mengubahnya secara manual.
 const CATATAN_ATASAN_TEMPLATE = 'Tetap pertahankan dan kerjakan sesuai aturan yang berlaku.';
@@ -1310,6 +1325,7 @@ async function loadAllSections(){
               sections[i].rows[ri].months = sr.months;
               if(sr.target2026!==undefined) sections[i].rows[ri].target2026 = sr.target2026;
               if(sr.capaianLalu!==undefined) sections[i].rows[ri].capaianLalu = sr.capaianLalu;
+              if(sr.targetAkhir!==undefined) sections[i].rows[ri].targetAkhir = sr.targetAkhir;
               if(sr.ku!==undefined) sections[i].rows[ri].ku = sr.ku;
               if(sr.ind!==undefined) sections[i].rows[ri].ind = sr.ind;
             }
@@ -1408,7 +1424,7 @@ async function loadAllSections(){
 async function saveSection(idx){
   const sec = STATE.sections[idx];
   const payload = {
-    rows: sec.rows.map(r=>({months:r.months, target2026:r.target2026, capaianLalu:r.capaianLalu, ku:r.ku, ind:r.ind})),
+    rows: sec.rows.map(r=>({months:r.months, target2026:r.target2026, capaianLalu:r.capaianLalu, targetAkhir:r.targetAkhir, ku:r.ku, ind:r.ind})),
     akt: sec.akt.map(a=>({text:a.text, satuan:a.satuan, target:a.target, months:a.months})),
     aktManual: sec.aktManual,
     penjelasan: sec.penjelasan,
@@ -2352,6 +2368,16 @@ function openSection(idx){
         });
       });
     });
+    main.querySelectorAll('input.row-targetakhir-input').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const ri = Number(inp.dataset.ri);
+        const r = sec.rows[ri];
+        sec.rows[ri].targetAkhir = targetAkhirInputToStore(r, inp.value);
+        main.querySelectorAll(`input.row-targetakhir-input[data-ri="${ri}"]`).forEach(other=>{
+          if(other!==inp) other.value = inp.value;
+        });
+      });
+    });
     // "Kinerja Utama" (ku) & "Indikator" (ind): hanya Admin yang melihat elemen input ini
     // (lihat rowHtml/rowCardHtml — dirender sebagai teks biasa untuk pengguna lain).
     main.querySelectorAll('textarea.row-ku-input').forEach(inp=>{
@@ -2514,7 +2540,9 @@ function rowHtml(r, ri, canEdit, activeMonths, isAdmin){
       </td>`;}).join('')}
     <td class="num total" data-total="${ri}">${fmtRowVal(r, total)}</td>
     <td class="num pct ${pctClass(cap)}" data-pct="${ri}">${cap===null ? '-' : fmtNum(cap*100,1)+'%'}</td>
-    <td class="num readonly">${r.targetAkhir!=null?fmtRowVal(r, r.targetAkhir):'-'}</td>
+    <td class="num ${isAdmin?'':'readonly'}">${isAdmin
+      ? `<input class="row-targetakhir-input" type="text" inputmode="decimal" data-ri="${ri}" value="${targetAkhirInputDisplay(r)}" style="width:74px;">${isPersenRow(r)?'<span class="unit-suffix">%</span>':''}`
+      : (r.targetAkhir!=null?fmtRowVal(r, r.targetAkhir):'-')}</td>
   </tr>`;
 }
 
@@ -2552,7 +2580,9 @@ function rowCardHtml(r, ri, canEdit, activeMonths, isAdmin){
       <div class="stat"><span class="lbl">Target 2026</span><span class="val">${isAdmin
         ? `<input class="row-target-input" type="text" inputmode="decimal" data-ri="${ri}" value="${targetInputDisplay(r)}" style="width:74px;">${isPersenRow(r)?'<span class="unit-suffix">%</span>':''}`
         : fmtRowVal(r, r.target2026)}</span></div>
-      <div class="stat"><span class="lbl">Target Akhir</span><span class="val">${r.targetAkhir!=null?fmtRowVal(r, r.targetAkhir):'-'}</span></div>
+      <div class="stat"><span class="lbl">Target Akhir</span><span class="val">${isAdmin
+        ? `<input class="row-targetakhir-input" type="text" inputmode="decimal" data-ri="${ri}" value="${targetAkhirInputDisplay(r)}" style="width:74px;">${isPersenRow(r)?'<span class="unit-suffix">%</span>':''}`
+        : (r.targetAkhir!=null?fmtRowVal(r, r.targetAkhir):'-')}</span></div>
     </div>
     <div class="tw2-row">
       ${tw2Months.map(mi=>`
