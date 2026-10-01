@@ -510,8 +510,10 @@ const BIDANG_ROW_FORMULA = {
 // Baris "Kinerja Utama" yang dihitung lewat mekanisme khusus lain (mis. Kalkulator PPKS
 // milik Admin) dan karena itu tetap terkunci bagi pemilik bagian (bukan lewat rumus di atas).
 const EXTRA_LOCKED_ROWS = [
-  { ownerNo:5, rowIdx:0 }, // Bidang Rehabilitasi Sosial: "Persentase PPKS yang dilayani & direhabilitasi di dalam panti" -> Kalkulator PPKS (Admin)
-  { ownerNo:1, rowIdx:2 }  // Kepala Dinas Sosial: "Tingkat Partisipasi PSKS dalam penyelenggaraan kesejahteraan sosial" -> Kalkulator Partisipasi PSKS (Admin)
+  { ownerNo:5, rowIdx:0 }  // Bidang Rehabilitasi Sosial: "Persentase PPKS yang dilayani & direhabilitasi di dalam panti" -> Kalkulator PPKS (Admin)
+  // Catatan: baris Kepala Dinas "Tingkat Partisipasi PSKS dalam penyelenggaraan kesejahteraan sosial"
+  // (ownerNo:1, rowIdx:2) sengaja DIHAPUS dari daftar kunci ini agar bisa diedit langsung oleh akun Kepala Dinas.
+  // Kalkulator Partisipasi PSKS (Admin) tetap berfungsi dan menulis ke baris yang sama.
 ];
 function rowFormulaFor(ownerNo, ri){
   const arr = BIDANG_ROW_FORMULA[ownerNo] || BIDANG_ROW_FORMULA[String(ownerNo)];
